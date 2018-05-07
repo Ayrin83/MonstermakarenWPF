@@ -20,7 +20,7 @@ namespace MonstermakarenWPF
     /// </summary>
     public partial class MainWindow : Window
     {
-        public PatternWindow patternwindow;
+        private PatternWindow patternwindow;
 
         public MainWindow()
         {
@@ -33,8 +33,10 @@ namespace MonstermakarenWPF
         private void buttonRectangular_Click(object sender, RoutedEventArgs e)
         {
             Logger.Log("buttonRectangular_Click");
+            
             patternwindow.Show();
-            patternwindow.drawRectangular(100, 150);
+            patternwindow.drawRectangular(10, 15);
+
             //patternwindow.drawRectangular(Convert.ToInt32(textBoxNumTotalHorizontalSt), Convert.ToInt32(textBoxNumTotalVerticalSt));
         }
     }
