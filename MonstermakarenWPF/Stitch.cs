@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Shapes;
+
 
 namespace MonstermakarenWPF
 {
@@ -12,22 +14,34 @@ namespace MonstermakarenWPF
         private Point _topLeft, _topRight;
         private Point _bottomLeft, _bottomRight;
         
+        private TypeSelector.ButtonType _stitchType;
 
-        private System.Drawing.Color _backColor;
-
-        private int groupNum;
+        private Shape _shape;
 
         public Stitch()
         {
-
+            _stitchType = TypeSelector.ButtonType.NONE;
         }
 
-        public Stitch(Point topLeft, Point topRight, Point bottomLeft, Point bottomRight)
+        public Stitch(Point topLeft, Point topRight, Point bottomLeft, Point bottomRight) : base()
         {
             _topLeft = topLeft;
             _topRight = topRight;
             _bottomLeft = bottomLeft;
             _bottomRight = bottomRight;
+
+        }
+
+        public TypeSelector.ButtonType stitchType
+        {
+            get
+            {
+                return _stitchType;
+            }
+            set
+            {
+                _stitchType = value;
+            }
         }
 
         
