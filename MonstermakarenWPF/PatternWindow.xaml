@@ -6,7 +6,6 @@
         xmlns:local="clr-namespace:MonstermakarenWPF"
         mc:Ignorable="d"
         Title="PatternWindow" Height="600" Width="600">
-    <Canvas x:Name="myCanvas" Margin="0,0,0,0" Height="600" Width="600" MouseLeftButtonUp="myCanvas_MouseLeftButtonUp" Background="Transparent">
-        
-    </Canvas>
+    <Image x:Name="myImage" Margin="0,0,0,0" Height="600" Width="600" MouseLeftButtonUp="myImage_MouseLeftButtonUp">
+    </Image>
 </Window>
