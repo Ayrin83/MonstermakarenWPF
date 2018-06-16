@@ -35,6 +35,7 @@ namespace MonstermakarenWPF
             InitializeComponent();
 
             typeSelector = new TypeSelector();
+            typeSelector.Show();
         }
 
    
@@ -132,14 +133,46 @@ namespace MonstermakarenWPF
 
             Logger.Log("Hit! " + hit.ToString() + " x: " + x + " y: " + y);
 
+            if (x < 0 || x > _numHorizontal)
+            {
+                Logger.Log("Invalid x-index (" + x + ")");
+                return;
+            }
+            if (y < 0 || y > _numVertical)
+            {
+                Logger.Log("Invalid y-index (" + y + ")");
+                return;
+            }
+
+
+            TypeSelector.ButtonType buttonType;
             try
             {
-                _stitches[x, y].stitchType = typeSelector.selectedButtonType;
+                buttonType = typeSelector.selectedButtonType;
+            }
+            catch
+            {
+                buttonType = TypeSelector.ButtonType.NONE;
+            }
+
+            try
+            {
+                _stitches[x, y].stitchType = buttonType;
             }
             catch (Exception ex)
             {
                 Logger.Log("myCanvas_MouseLeftButtonUp, exception " + ex.Message);
+                try
+                {
+                    _stitches[x, y] = new Stitch(buttonType);
+                }
+                catch
+                {
+                    Logger.Log("Unable to create new stitch in " + x + ", " + y);
+                }
             }
+
+
         }
     }
 

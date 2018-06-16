@@ -11,26 +11,31 @@ namespace MonstermakarenWPF
 {
     public class Stitch
     {
-        private Point _topLeft, _topRight;
-        private Point _bottomLeft, _bottomRight;
+        //private Point _topLeft, _topRight;
+        //private Point _bottomLeft, _bottomRight;
         
         private TypeSelector.ButtonType _stitchType;
 
-        private Shape _shape;
+       // private Shape _shape;
 
         public Stitch()
         {
-            _stitchType = TypeSelector.ButtonType.NONE;
+            
         }
 
-        public Stitch(Point topLeft, Point topRight, Point bottomLeft, Point bottomRight) : base()
+        public Stitch(TypeSelector.ButtonType type) : base()
         {
-            _topLeft = topLeft;
-            _topRight = topRight;
-            _bottomLeft = bottomLeft;
-            _bottomRight = bottomRight;
-
+            _stitchType = type;
         }
+
+        //public Stitch(Point topLeft, Point topRight, Point bottomLeft, Point bottomRight) : base()
+        //{
+        //    _topLeft = topLeft;
+        //    _topRight = topRight;
+        //    _bottomLeft = bottomLeft;
+        //    _bottomRight = bottomRight;
+
+        //}
 
         public TypeSelector.ButtonType stitchType
         {
