@@ -31,6 +31,7 @@ namespace MonstermakarenWPF
         public TypeSelector()
         {
             InitializeComponent();
+            selectedButtonType = ButtonType.NONE;
         }
 
         private void ButtonType1_Click(object sender, RoutedEventArgs e)
