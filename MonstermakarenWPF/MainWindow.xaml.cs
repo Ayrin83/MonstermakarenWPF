@@ -34,7 +34,7 @@ namespace MonstermakarenWPF
         {
             Logger.Log("buttonRectangular_Click");
             patternwindow.Show();
-            patternwindow.drawRectangular(10, 5);
+            patternwindow.drawRectangular(5, 10);
             //patternwindow.drawRectangular(Convert.ToInt32(textBoxNumTotalHorizontalSt), Convert.ToInt32(textBoxNumTotalVerticalSt));
         }
     }

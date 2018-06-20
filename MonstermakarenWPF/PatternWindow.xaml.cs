@@ -26,6 +26,9 @@ namespace MonstermakarenWPF
         private int _numVertical;
         private double _distanceX;
         private double _distanceY;
+
+        private int _distX_int; // if _distX_int < _distY_int -> _distY_int = _distX_int 
+        private int _distY_int; // if _distY_int < _distX_int -> _distX_int = _distY_int 
         private Stitch[,] _stitches;
 
         private TypeSelector typeSelector;
@@ -48,8 +51,16 @@ namespace MonstermakarenWPF
             _distanceX = (myImage.Width - 3 * MARGIN) / numHorizontal;
             _distanceY = (myImage.Height - 3 * MARGIN) / numVertical;
 
-            int distX_int = (int)Math.Floor(_distanceX);
-            int distY_int = (int)Math.Floor(_distanceY);
+            _distX_int = (int)Math.Floor(_distanceX);
+            _distY_int = (int)Math.Floor(_distanceY);
+
+            if (_distX_int > _distY_int)
+                _distX_int = _distY_int;
+            else
+                _distY_int = _distX_int;
+
+            int pixelsX = _distX_int * numHorizontal;
+            int pixelsY = _distY_int * numVertical;
 
             _stitches = new Stitch[_numHorizontal, _numVertical];
 
@@ -79,11 +90,11 @@ namespace MonstermakarenWPF
                 {
                     startOfRow = pBackbuffer;
 
-                    if (y == MARGIN || y > MARGIN && (y - MARGIN) % distY_int == 0) // Horisontal line
+                    if ( y >= MARGIN && y <= pixelsY + MARGIN && (y - MARGIN) % _distY_int == 0) // Horisontal line
                     {
                         for (int x = 0; x < myImage.Width; x++)
                         {
-                            if (x > MARGIN && x - MARGIN < distX_int*numHorizontal)
+                            if (x > MARGIN && x - MARGIN < _distX_int*numHorizontal)
                             {
                                 *((int*)pBackbuffer) = black;
                             }
@@ -98,7 +109,7 @@ namespace MonstermakarenWPF
                     {
                         for (int x = 0; x < myImage.Width; x++)
                         {
-                            if (y >= MARGIN && y - MARGIN <= distY_int * numVertical && x >= MARGIN && x - MARGIN <= distX_int * numHorizontal && (x - MARGIN) % distX_int == 0)
+                            if (y >= MARGIN && y - MARGIN <= _distY_int * numVertical && x >= MARGIN && x - MARGIN <= _distX_int * numHorizontal && (x - MARGIN) % _distX_int == 0)
                             {
                                 *((int*)pBackbuffer) = black;
                             }
@@ -109,10 +120,6 @@ namespace MonstermakarenWPF
                             pBackbuffer += 4;
                         }
                     }                 
-
-                    //backMargin = writeablebitmap.BackBufferStride - (pBackbuffer - startOfRow);
-                    //pBackbuffer += backMargin;
-                   
                 }                               
             }
 
@@ -125,10 +132,10 @@ namespace MonstermakarenWPF
         {          
             Point hit = e.GetPosition(myImage);
 
-            double X = (hit.X - MARGIN) / _distanceX;
+            double X = (hit.X - MARGIN) / _distX_int;
             int x = (int)Math.Floor(X);
 
-            double Y = (hit.Y - MARGIN) / _distanceY;
+            double Y = (hit.Y - MARGIN) / _distY_int;
             int y = (int)Math.Floor(Y);
 
             Logger.Log("Hit! " + hit.ToString() + " x: " + x + " y: " + y);
@@ -170,6 +177,7 @@ namespace MonstermakarenWPF
                 {
                     Logger.Log("Unable to create new stitch in " + x + ", " + y);
                 }
+                return;
             }
 
 
