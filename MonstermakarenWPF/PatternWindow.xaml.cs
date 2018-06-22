@@ -22,16 +22,25 @@ namespace MonstermakarenWPF
 
         private const int MARGIN = 20;
 
+        private const Int32 WHITE = 0x00ffffff; // RGB
+        private const Int32 BLACK = 0x00000000; // RGB
+
+
         private int _numHorizontal;
         private int _numVertical;
         private double _distanceX;
         private double _distanceY;
 
-        private int _distX_int; // if _distX_int < _distY_int -> _distY_int = _distX_int 
-        private int _distY_int; // if _distY_int < _distX_int -> _distX_int = _distY_int 
+        private int _numPixelsInStitch_X; // if _distX_int < _distY_int -> _distY_int = _distX_int 
+        private int _numPixelsInStitch_Y; // if _distY_int < _distX_int -> _distX_int = _distY_int 
         private Stitch[,] _stitches;
 
         private TypeSelector typeSelector;
+
+        private WriteableBitmap _writeableBitmap;
+
+        int _pixelsX;
+        int _pixelsY;
 
         public PatternWindow()
         {
@@ -51,56 +60,51 @@ namespace MonstermakarenWPF
             _distanceX = (myImage.Width - 3 * MARGIN) / numHorizontal;
             _distanceY = (myImage.Height - 3 * MARGIN) / numVertical;
 
-            _distX_int = (int)Math.Floor(_distanceX);
-            _distY_int = (int)Math.Floor(_distanceY);
+            _numPixelsInStitch_X = (int)Math.Floor(_distanceX);
+            _numPixelsInStitch_Y = (int)Math.Floor(_distanceY);
 
-            if (_distX_int > _distY_int)
-                _distX_int = _distY_int;
+            if (_numPixelsInStitch_X > _numPixelsInStitch_Y)
+                _numPixelsInStitch_X = _numPixelsInStitch_Y;
             else
-                _distY_int = _distX_int;
+                _numPixelsInStitch_Y = _numPixelsInStitch_X;
 
-            int pixelsX = _distX_int * numHorizontal;
-            int pixelsY = _distY_int * numVertical;
+            _pixelsX = _numPixelsInStitch_X * numHorizontal;
+            _pixelsY = _numPixelsInStitch_Y * numVertical;
 
             _stitches = new Stitch[_numHorizontal, _numVertical];
 
-            WriteableBitmap writeablebitmap = new WriteableBitmap((int)this.ActualHeight, (int)this.ActualWidth, 96, 96, PixelFormats.Bgr32, null);
+            _writeableBitmap = new WriteableBitmap((int)this.ActualHeight, (int)this.ActualWidth, 96, 96, PixelFormats.Bgr32, null);
 
-            myImage.Source = writeablebitmap;
+            myImage.Source = _writeableBitmap;
 
             myImage.Stretch = Stretch.None;
             myImage.HorizontalAlignment = HorizontalAlignment.Left;
             myImage.VerticalAlignment = VerticalAlignment.Top;
 
-            Int32 white = 0x00ffffff; // RGB
-            Int32 black = 0x00000000; // RGB
+            
 
-            int pBackbuffer = (int)writeablebitmap.BackBuffer;
+            int pBackbuffer = (int)_writeableBitmap.BackBuffer;
             //pBackbuffer += MARGIN * writeablebitmap.BackBufferStride; // jump MARGIN number of rows
 
-            int startOfRow;
- 
             //pBackbuffer += MARGIN * 4; // Jump MARGIN number of columns 
 
-            writeablebitmap.Lock();
+            _writeableBitmap.Lock();
 
             unsafe
             {
                 for (int y = 0; y < myImage.Height; y++)
                 {
-                    startOfRow = pBackbuffer;
-
-                    if ( y >= MARGIN && y <= pixelsY + MARGIN && (y - MARGIN) % _distY_int == 0) // Horisontal line
+                    if ( y >= MARGIN && y <= _pixelsY + MARGIN && (y - MARGIN) % _numPixelsInStitch_Y == 0) // Horisontal line
                     {
                         for (int x = 0; x < myImage.Width; x++)
                         {
-                            if (x > MARGIN && x - MARGIN < _distX_int*numHorizontal)
+                            if (x > MARGIN && x - MARGIN < _numPixelsInStitch_X * numHorizontal)
                             {
-                                *((int*)pBackbuffer) = black;
+                                *((int*)pBackbuffer) = BLACK;
                             }
                             else
                             {
-                                *((int*)pBackbuffer) = white;
+                                *((int*)pBackbuffer) = WHITE;
                             }
                             pBackbuffer += 4;
                         }
@@ -109,13 +113,13 @@ namespace MonstermakarenWPF
                     {
                         for (int x = 0; x < myImage.Width; x++)
                         {
-                            if (y >= MARGIN && y - MARGIN <= _distY_int * numVertical && x >= MARGIN && x - MARGIN <= _distX_int * numHorizontal && (x - MARGIN) % _distX_int == 0)
+                            if (y >= MARGIN && y - MARGIN <= _numPixelsInStitch_Y * numVertical && x >= MARGIN && x - MARGIN <= _numPixelsInStitch_X * numHorizontal && (x - MARGIN) % _numPixelsInStitch_X == 0)
                             {
-                                *((int*)pBackbuffer) = black;
+                                *((int*)pBackbuffer) = BLACK;
                             }
                             else
                             {
-                                *((int*)pBackbuffer) = white;
+                                *((int*)pBackbuffer) = WHITE;
                             }
                             pBackbuffer += 4;
                         }
@@ -123,31 +127,181 @@ namespace MonstermakarenWPF
                 }                               
             }
 
-            writeablebitmap.AddDirtyRect(new Int32Rect(0, 0, (int)this.ActualWidth, (int)this.ActualHeight));
-            writeablebitmap.Unlock();
+            _writeableBitmap.AddDirtyRect(new Int32Rect(0, 0, (int)this.ActualWidth, (int)this.ActualHeight));
+            _writeableBitmap.Unlock();
         }
 
+
+        /// <summary>
+        /// Redraw the rectangle-pattern in the given area.
+        /// </summary>
+        /// <param name="startPixelX"></param>
+        /// <param name="startPixelY"></param>
+        /// <param name="numPixelX"></param>
+        /// <param name="numPixelY"></param>
+        private void reDrawRectanglesInArea(int startPixelX, int startPixelY, int numPixelX, int numPixelY)
+        {
+            int pBackbuffer = (int)_writeableBitmap.BackBuffer;
+            //int startOfRow;
+
+            int stopPixelX = startPixelX + numPixelX;
+            int stopPixelY = startPixelY + numPixelY;          
+
+            _writeableBitmap.Lock();
+            unsafe
+            {
+                for (int y = startPixelY; y < stopPixelY; y++)
+                {
+                    //startOfRow = pBackbuffer;
+
+                    if (y >= MARGIN && y <= _pixelsY + MARGIN && (y - MARGIN) % _numPixelsInStitch_Y == 0) // Horisontal line
+                    {
+                        for (int x = 0; x < myImage.Width; x++)
+                        {
+                            if (x > MARGIN && x - MARGIN < _numPixelsInStitch_X * _numHorizontal)
+                            {
+                                *((int*)pBackbuffer) = BLACK;
+                            }
+                            else
+                            {
+                                *((int*)pBackbuffer) = WHITE;
+                            }
+                            pBackbuffer += 4;
+                        }
+                    }
+                    else
+                    {
+                        for (int x = startPixelX; x < stopPixelX; x++)
+                        {
+                            if (y >= MARGIN && y - MARGIN <= _numPixelsInStitch_Y * _numVertical && x >= MARGIN && x - MARGIN <= _numPixelsInStitch_X * _numHorizontal && (x - MARGIN) % _numPixelsInStitch_X == 0)
+                            {
+                                *((int*)pBackbuffer) = BLACK;
+                            }
+                            else
+                            {
+                                *((int*)pBackbuffer) = WHITE;
+                            }
+                            pBackbuffer += 4;
+                        }
+                    }
+                }
+            }
+
+            _writeableBitmap.AddDirtyRect(new Int32Rect(startPixelX, startPixelY, numPixelX, numPixelY));
+            _writeableBitmap.Unlock();
+        }
+
+
+        private void reDrawStitches(int xIndex, int yIndex, int numXstitches, int numYstitches)
+        {
+            int startpixelX = xIndex * _numPixelsInStitch_X + MARGIN;
+            int startpixelY = yIndex * _numPixelsInStitch_Y + MARGIN;
+
+            int stopPixelX = (xIndex + numXstitches + 1) * _numPixelsInStitch_X + MARGIN;
+            int stopPixelY = (yIndex + numYstitches + 1) * _numPixelsInStitch_Y + MARGIN;
+
+            int[,] currentPattern;
+
+            try
+            {
+                switch (_stitches[xIndex, yIndex].stitchType)
+                {
+                    case TypeSelector.ButtonType.NONE:
+                        currentPattern = typeSelector.type2Array;
+                        break;
+
+                    case TypeSelector.ButtonType.TYPE1:
+                        currentPattern = typeSelector.type1Array;
+                        break;
+
+                    case TypeSelector.ButtonType.TYPE2:
+                        currentPattern = typeSelector.type2Array;
+                        break;
+
+                    default:
+                        currentPattern = typeSelector.typeDefaultArray; ;
+                        break;
+
+                }
+            }
+            catch(Exception ex)
+            {
+                Logger.Log("reDrawStitches, exception: " + ex.Message);
+                currentPattern = typeSelector.typeDefaultArray;
+            }
+
+            double actualRepeat = (double)_numPixelsInStitch_X / typeSelector.type1Array.GetLength(0);
+            int repeat = (int)Math.Floor(actualRepeat);
+            int numRepeatsX = 0;
+            int numRepeatsY = 0;
+
+            int pBackbuffer = (int)_writeableBitmap.BackBuffer;
+
+            int px = 0;
+            int py = 0;
+            int currentcolor;
+
+            pBackbuffer += startpixelX * 4 + (startpixelY + 1) * _writeableBitmap.BackBufferStride + 4;
+                       
+            _writeableBitmap.Lock();
+            unsafe
+            {
+                for (int y = 0; y < _numPixelsInStitch_Y - 1; y++)
+                {
+                    for (int x = 0; x < _numPixelsInStitch_X - 1; x++)
+                    {
+                        pBackbuffer += 4;
+
+                        currentcolor = currentPattern[px, py];
+                        if (currentPattern[px,py] == 1)
+                            *((int*)pBackbuffer) = BLACK;
+                        else
+                            *((int*)pBackbuffer) = WHITE;                       
+
+                        if (++numRepeatsX % repeat == 0 && px < 4)
+                        {
+                            px++;
+                        }
+                    }
+
+                    pBackbuffer += _writeableBitmap.BackBufferStride - _numPixelsInStitch_X * 4 + 4;
+                    if (++numRepeatsY % repeat == 0 && py < 4)
+                    {
+                        py++;
+                    }
+                    px = 0;
+                }
+            }
+            _writeableBitmap.AddDirtyRect(new Int32Rect(startpixelX, startpixelY, _numPixelsInStitch_X, _numPixelsInStitch_Y));
+            _writeableBitmap.Unlock();
+
+        }
+
+        private void reDrawStitches()
+        {
+
+        }
 
         private void myImage_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
         {          
             Point hit = e.GetPosition(myImage);
 
-            double X = (hit.X - MARGIN) / _distX_int;
-            int x = (int)Math.Floor(X);
+            double X = (hit.X - MARGIN) / _numPixelsInStitch_X;
+            int xIndex = (int)Math.Floor(X);
 
-            double Y = (hit.Y - MARGIN) / _distY_int;
-            int y = (int)Math.Floor(Y);
+            double Y = (hit.Y - MARGIN) / _numPixelsInStitch_Y;
+            int yIndex = (int)Math.Floor(Y);
 
-            Logger.Log("Hit! " + hit.ToString() + " x: " + x + " y: " + y);
+            Logger.Log("Hit! " + hit.ToString() + " x: " + xIndex + " y: " + yIndex);
 
-            if (x < 0 || x > _numHorizontal)
+            if (xIndex < 0 || xIndex > _numHorizontal)
             {
-                Logger.Log("Invalid x-index (" + x + ")");
+                Logger.Log("Invalid x-index (" + xIndex + ")");
                 return;
             }
-            if (y < 0 || y > _numVertical)
+            if (yIndex < 0 || yIndex > _numVertical)
             {
-                Logger.Log("Invalid y-index (" + y + ")");
+                Logger.Log("Invalid y-index (" + yIndex + ")");
                 return;
             }
 
@@ -164,21 +318,23 @@ namespace MonstermakarenWPF
 
             try
             {
-                _stitches[x, y].stitchType = buttonType;
+                _stitches[xIndex, yIndex].stitchType = buttonType;
             }
             catch (Exception ex)
             {
                 Logger.Log("myCanvas_MouseLeftButtonUp, exception " + ex.Message);
                 try
                 {
-                    _stitches[x, y] = new Stitch(buttonType);
+                    _stitches[xIndex, yIndex] = new Stitch(buttonType);
                 }
                 catch
                 {
-                    Logger.Log("Unable to create new stitch in " + x + ", " + y);
+                    Logger.Log("Unable to create new stitch in " + xIndex + ", " + yIndex);
                 }
                 return;
             }
+
+            reDrawStitches(xIndex, yIndex, 1, 1);
 
 
         }
